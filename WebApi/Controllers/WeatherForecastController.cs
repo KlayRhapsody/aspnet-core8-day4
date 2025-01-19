@@ -20,8 +20,31 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<Course> Get()
+    public IActionResult Get(string query)
     {
-        return _context.Courses.ToList();
+        var data = _context.Courses
+            .Include(item => item.Department)
+            .Where(item => item.Title!.Contains(query))
+            .Select(item => new
+            {
+                item.CourseId,
+                item.Title,
+                item.Credits,
+                DepartmentName = item.Department!.Name
+            })
+            .ToList();
+
+        // var data = from item in _context.Courses
+        //         join d in _context.Departments on item.DepartmentId equals d.DepartmentId
+        //         where item.Title!.Contains(query)
+        //         select new
+        //         {
+        //             item.CourseId,
+        //             item.Title,
+        //             item.Credits,
+        //             DepartmentName = d.Name
+        //         };
+
+        return Ok(data);
     }
 }

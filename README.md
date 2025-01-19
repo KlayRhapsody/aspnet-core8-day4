@@ -23,3 +23,75 @@
   }
 }
 ```
+
+
+### **方法語法（Method Syntax）或流式語法（Fluent Syntax）**
+
+```csharp
+public IActionResult Get(string query)
+{
+    var data = _context.Courses
+            .Include(item => item.Department)
+            .Where(item => item.Title!.Contains(query))
+            .Select(item => new
+            {
+                item.CourseId,
+                item.Title,
+                item.Credits,
+                DepartmentName = item.Department!.Name
+            })
+            .ToList();
+
+    return Ok(data);
+}
+```
+
+對應的 SQL 查詢語法
+
+```SQL
+Executed DbCommand (36ms) [Parameters=[@__query_0_contains='?' (Size = 50)], CommandType='Text', CommandTimeout='30']
+      SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+      FROM [Course] AS [c]
+      INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+      WHERE [c].[Title] LIKE @__query_0_contains ESCAPE N'\'
+```
+
+
+### **查詢語法（Query Syntax）**
+
+```csharp
+public IActionResult Get(string query)
+{
+    var data = from item in _context.Courses
+            join d in _context.Departments on item.DepartmentId equals d.DepartmentId
+            where item.Title!.Contains(query)
+            select new
+            {
+                item.CourseId,
+                item.Title,
+                item.Credits,
+                DepartmentName = d.Name
+            };
+
+    return Ok(data);
+}
+```
+
+
+### **請用 Log 輸出查詢參數**
+
+```csharp
+builder.Services.AddDbContext<ContosoUniversityContext>(options => 
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.EnableSensitiveDataLogging();
+});
+```
+
+```sql
+Executed DbCommand (16ms) [Parameters=[@__query_0_contains='%asp%' (Size = 50)], CommandType='Text', CommandTimeout='30']
+      SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+      FROM [Course] AS [c]
+      INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+      WHERE [c].[Title] LIKE @__query_0_contains ESCAPE N'\'
+```

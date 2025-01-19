@@ -1,7 +1,7 @@
 @WebApi_HostAddress = http://localhost:5202
 
-GET {{WebApi_HostAddress}}/weatherforecast/
+GET {{WebApi_HostAddress}}/weatherforecast/?query=asp
 Accept: application/json
-X-Database-Name: ContosoUniversity
+# X-Database-Name: ContosoUniversity
 
 ###
