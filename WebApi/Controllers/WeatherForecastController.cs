@@ -20,30 +20,33 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IActionResult Get(string query)
+    public IActionResult Get(string? query)
     {
-        var data = _context.Courses
-            .Include(item => item.Department)
-            .Where(item => item.Title!.Contains(query))
-            .Select(item => new
-            {
-                item.CourseId,
-                item.Title,
-                item.Credits,
-                DepartmentName = item.Department!.Name
-            })
-            .ToList();
+        // var data = _context.Courses
+        //     .Include(item => item.Department)
+        //     .Where(item => item.Title!.Contains(query))
+        //     .Select(item => new
+        //     {
+        //         item.CourseId,
+        //         item.Title,
+        //         item.Credits,
+        //         DepartmentName = item.Department!.Name
+        //     })
+        //     .ToList();
 
-        // var data = from item in _context.Courses
-        //         join d in _context.Departments on item.DepartmentId equals d.DepartmentId
-        //         where item.Title!.Contains(query)
-        //         select new
-        //         {
-        //             item.CourseId,
-        //             item.Title,
-        //             item.Credits,
-        //             DepartmentName = d.Name
-        //         };
+        var data = from item in _context.Courses
+                join d in _context.Departments on item.DepartmentId equals d.DepartmentId
+                where d.StartDate.Date == DateTime.Parse("2015-02-01")
+                select new
+                {
+                    item.CourseId,
+                    item.Title,
+                    item.Credits,
+                    DepartmentName = d.Name
+                };
+
+        if (!string.IsNullOrEmpty(query))
+            data = data.Where(item => item.Title.Contains(query));
 
         return Ok(data);
     }

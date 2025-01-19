@@ -95,3 +95,21 @@ Executed DbCommand (16ms) [Parameters=[@__query_0_contains='%asp%' (Size = 50)],
       INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
       WHERE [c].[Title] LIKE @__query_0_contains ESCAPE N'\'
 ```
+
+
+### **使用 EF Core 不會發生 SQL Injection**
+
+已經參數化的查詢語句，即使使用者輸入了 SQL Injection 的內容，也不會對資料庫造成影響。
+
+```bash
+GET {{WebApi_HostAddress}}/weatherforecast/?query=Git;%20DROP%20TABLE%20Course
+Accept: application/json
+```
+
+```sql
+Executed DbCommand (95ms) [Parameters=[@__query_0_contains='%Git; DROP TABLE Course%' (Size = 50)], CommandType='Text', CommandTimeout='30']
+      SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+      FROM [Course] AS [c]
+      INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+      WHERE CONVERT(date, [d].[StartDate]) = '2015-02-01T00:00:00.000' AND [c].[Title] LIKE @__query_0_contains ESCAPE N'\'
+```
