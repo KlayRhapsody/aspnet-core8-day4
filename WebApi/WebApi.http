@@ -2,5 +2,6 @@
 
 GET {{WebApi_HostAddress}}/weatherforecast/
 Accept: application/json
+X-Database-Name: ContosoUniversity
 
 ###
