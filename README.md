@@ -171,3 +171,68 @@ public async Task<IActionResult> GetMyDepartCoursesSP(string? query)
 ```
 
 
+### **使用 Raw SQL 進行查詢**
+
+1. 使用 `FromSqlRaw` 方法（可能有 SQL Injection 風險）
+   - 如果直接將參數拼接到 SQL 查詢語句（如 `sqlQuery` 的第一種寫法），會有 SQL Injection 的風險。
+   - 不建議直接將用戶輸入拼接到查詢語句中，應避免這種用法。
+
+2. 使用 `FromSql` 方法（安全）
+   - 其行為等同於 `FromSqlInterpolated`，可自動進行參數化處理，避免 SQL Injection 風險。
+
+3. 使用 `FromSqlInterpolated` 方法（安全）
+   - `FromSqlInterpolated` 的參數為 `FormattableString` 類型。
+   - 它會自動將內插變數轉換為參數化查詢，確保安全性，並防止 SQL Injection。
+   - 推薦使用這種方式來處理帶參數的查詢語句，特別是在需要直接內插變數的情境下。
+
+4. 使用 `FromSqlRaw` 方法並帶入參數（安全）
+   - 若使用 `FromSqlRaw`，需要明確提供參數化的查詢。
+   - 可以通過 `SqlParameter` 或匿名物件傳遞參數，這樣也可以避免 SQL Injection 的風險。
+     - 使用自定義名稱的參數（如 `@query`）。
+     - 或使用自動命名的參數（如 `@p0`、`@p1` 等），EF Core 會自動處理多個參數的對應。
+
+
+```csharp
+public async Task<IActionResult> GetMyDepartCoursesSQL(string? query)
+{
+    var sqlQuery = $"""
+        SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+        FROM [Course] AS [c]
+        INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+        WHERE [c].[Title] LIKE '%{query}%'
+        """;
+
+    var data1 = await _context.VwMyDepartCourses.FromSqlRaw(sqlQuery).ToListAsync();
+
+    var data2 = await _context.VwMyDepartCourses.FromSql(
+        $"""
+        SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+        FROM [Course] AS [c]
+        INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+        WHERE [c].[Title] LIKE '%' + {query} + '%'
+        """).ToListAsync();
+
+    var data3 = _context.VwMyDepartCourses.FromSqlInterpolated(
+        $"""
+        SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+        FROM [Course] AS [c]
+        INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+        WHERE [c].[Title] LIKE '%' + {query} + '%'
+        """);
+
+    var data4 = _context.VwMyDepartCourses.FromSqlRaw(
+        $"""
+        SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+        FROM [Course] AS [c]
+        INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+        WHERE [c].[Title] LIKE '%' + @query + '%'
+        """, new SqlParameter("@query", query)); // 或是直接使用 @p0
+
+    return Ok(data4);
+}
+```
+
+
+
+
+
