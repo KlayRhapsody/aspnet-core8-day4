@@ -23,6 +23,8 @@ public partial class ContosoUniversityContext : DbContext
 
     public virtual DbSet<Person> People { get; set; }
 
+    public virtual DbSet<VwMyDepartCourse> VwMyDepartCourses { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Course>(entity =>
@@ -141,6 +143,16 @@ public partial class ContosoUniversityContext : DbContext
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.HireDate).HasColumnType("datetime");
             entity.Property(e => e.LastName).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<VwMyDepartCourse>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("vwMyDepartCourse");
+
+            entity.Property(e => e.DepartmentName).HasMaxLength(50);
+            entity.Property(e => e.Title).HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);

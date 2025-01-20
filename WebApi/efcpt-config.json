@@ -32,7 +32,11 @@
     "model-namespace": null,
     "root-namespace": "WebApi"
   },
-  "stored-procedures": [],
+  "stored-procedures": [
+    {
+      "name": "[dbo].[GetMyDepartCourses]"
+    }
+  ],
   "tables": [
     {
       "name": "[dbo].[Course]"
@@ -59,5 +63,9 @@
     "use-NodaTime": false,
     "use-spatial": false
   },
-  "views": []
+  "views": [
+    {
+      "name": "[dbo].[vwMyDepartCourse]"
+    }
+  ]
 }

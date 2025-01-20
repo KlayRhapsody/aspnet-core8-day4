@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace WebApi.Controllers;
 
 [ApiController]
@@ -36,7 +38,7 @@ public class WeatherForecastController : ControllerBase
 
         var data = from item in _context.Courses
                 join d in _context.Departments on item.DepartmentId equals d.DepartmentId
-                where d.StartDate.Date == DateTime.Parse("2015-02-01")
+                where d.StartDate.Date == DateTime.Parse("2015-03-21")
                 select new
                 {
                     item.CourseId,
@@ -50,4 +52,28 @@ public class WeatherForecastController : ControllerBase
 
         return Ok(data);
     }
+
+    // GET: WeatherForecast/myDepartCourses
+    [HttpGet("MyDepartCourses", Name = "GetMyDepartCourses")]
+    public IActionResult GetMyDepartCourses(string? query)
+    {
+        // var data = _context.VwMyDepartCourses.AsQueryable();
+        var data = from item in _context.VwMyDepartCourses
+                select item;
+
+        if (!string.IsNullOrEmpty(query))
+            data = data.Where(item => item.Title!.Contains(query));
+
+        return Ok(data);
+    }
+
+    [HttpGet("MyDepartCoursesSP", Name = "GetMyDepartCoursesSP")]
+    public async Task<IActionResult> GetMyDepartCoursesSP(string? query)
+    {
+        var data = await _context.GetProcedures().GetMyDepartCoursesAsync(query);
+
+        return Ok(data);
+    }
+    
+    
 }

@@ -113,3 +113,61 @@ Executed DbCommand (95ms) [Parameters=[@__query_0_contains='%Git; DROP TABLE Cou
       INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
       WHERE CONVERT(date, [d].[StartDate]) = '2015-02-01T00:00:00.000' AND [c].[Title] LIKE @__query_0_contains ESCAPE N'\'
 ```
+
+
+### **使用 view 進行查詢邏輯封裝**
+
+先於資料庫中建立一個 view
+
+```sql
+CREATE VIEW vwMyDepartCourse AS
+SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+      FROM [Course] AS [c]
+      INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+```
+
+使用逆向工程將 view 加入到 DbContext 中，並調整對應程式碼使用方式
+
+```csharp
+public IActionResult GetMyDepartCourses(string? query)
+{
+    // var data = _context.VwMyDepartCourses.AsQueryable();
+    var data = from item in _context.VwMyDepartCourses
+            select item;
+
+    if (!string.IsNullOrEmpty(query))
+        data = data.Where(item => item.Title!.Contains(query));
+
+    return Ok(data);
+}
+```
+
+
+### **使用 Store Procedure 進行查詢邏輯封裝**
+
+先於資料庫中建立一個 Store Procedure
+
+```sql
+CREATE PROCEDURE GetMyDepartCourses
+    @query NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+    FROM [Course] AS [c]
+    INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+    WHERE (@query IS NULL OR [c].[Title] LIKE '%' + @query + '%')
+END
+```
+
+使用逆向工程將 Store Procedure 加入到 DbContext 中，並調整對應程式碼使用方式
+
+```csharp
+public async Task<IActionResult> GetMyDepartCoursesSP(string? query)
+{
+    var data = await _context.GetProcedures().GetMyDepartCoursesAsync(query);
+
+    return Ok(data);
+}
+```
+
+

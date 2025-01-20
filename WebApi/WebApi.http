@@ -1,6 +1,6 @@
 @WebApi_HostAddress = http://localhost:5202
 
-GET {{WebApi_HostAddress}}/weatherforecast/?query=asp
+GET {{WebApi_HostAddress}}/weatherforecast/?query=Git
 Accept: application/json
 # X-Database-Name: ContosoUniversity
 
@@ -9,9 +9,18 @@ Accept: application/json
 GET {{WebApi_HostAddress}}/weatherforecast/
 Accept: application/json
 
+###
+
+GET {{WebApi_HostAddress}}/weatherforecast/?query=Git;%20DROP%20TABLE%20Course
+Accept: application/json
 
 ###
 
+GET {{WebApi_HostAddress}}/weatherforecast/MyDepartCourses?query=Git
+Accept: application/json
 
-GET {{WebApi_HostAddress}}/weatherforecast/?query=Git;%20DROP%20TABLE%20Course
+
+###
+
+GET {{WebApi_HostAddress}}/weatherforecast/MyDepartCoursesSP?query=Git
 Accept: application/json
