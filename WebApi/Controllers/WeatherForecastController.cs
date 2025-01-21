@@ -1,6 +1,3 @@
-using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
-
 namespace WebApi.Controllers;
 
 [ApiController]
@@ -114,5 +111,22 @@ public class WeatherForecastController : ControllerBase
 
         return Ok(data4);
     }
-    
+
+    [HttpGet("CourseInstructors", Name = "GetCourseInstructors")]
+    public async Task<ActionResult<InstructorsResponse>> GetCourseInstructors()
+    {
+        var data = await _context.Courses
+            .Include(item => item.Instructors)
+            .SelectMany(c => c.Instructors, (c, i) => new InstructorsResponse
+            {
+                Id = i.Id,
+                FirstName = i.FirstName,
+                LastName = i.LastName,
+                Discriminator = i.Discriminator
+            })
+            .ToListAsync();
+
+        return Ok(data);
+    }
+        
 }

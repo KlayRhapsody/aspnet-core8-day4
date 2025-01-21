@@ -233,6 +233,68 @@ public async Task<IActionResult> GetMyDepartCoursesSQL(string? query)
 ```
 
 
+### **循環參考問題（Loop Reference Issue）**
+
+在查詢語句中使用 `Include` 方法時，可能會導致循環參考問題，例如 `Department` 類別中包含了 `Course` 類別，而 `Course` 類別中又包含了 `Department` 類別。
+
+```bash
+:System.Text.Json.JsonException: A possible object cycle was detected. This can either be due to a cycle or if the object depth is larger than the maximum allowed depth of 32.
+```
+
+解決方法一是使用 `JsonIgnore` 屬性來忽略循環參考，不適用於 DB First 的開發情境，因為會調整到 EF Core 產生的程式碼。
+
+```csharp
+[JsonIgnore]
+public virtual ICollection<Course> Courses { get; set; }
+```
+
+解決方法二是使用 DTO 來避免循環參考，自定義一個 DTO 類別，只包含需要的屬性。
+
+```csharp
+public class InstructorsResponse
+{
+    public int Id { get; set; }
+
+    public string LastName { get; set; } = null!;
+
+    public string FirstName { get; set; } = null!;
+
+    public string Discriminator { get; set; } = null!;
+}
+```
+
+先 `Inclue` 關聯表，再使用 `Select` 或 `SelectMany` 方法將需要的屬性映射到 DTO 類別中。
+
+這裡選用 `SelectMany` 方法，將 `Courses` 表和 `Instructors` 表進行聯集操作，並將結果映射到 `InstructorsResponse` 類別中。
+
+`SelectMany` 是一個 LINQ 擴充方法，用來展開集合中的集合，將多個集合中的元素合併到一個集合中。
+
+```csharp
+public async Task<ActionResult<InstructorsResponse>> GetCourseInstructors()
+{
+    var data = await _context.Courses
+        .Include(item => item.Instructors)
+        .SelectMany(c => c.Instructors, (c, i) => new InstructorsResponse
+        {
+            Id = i.Id,
+            FirstName = i.FirstName,
+            LastName = i.LastName,
+            Discriminator = i.Discriminator
+        })
+        .ToListAsync();
+
+    return Ok(data);
+}
+```
 
 
+### **使用 EF Core Power Tools 產生 Diagram**
+
+調整設定後再執行 `efcpt ...` 指令，即可生成 Mermaid Diagram。
+
+```json
+{
+    "generate-mermaid-diagram": true,
+}
+```
 

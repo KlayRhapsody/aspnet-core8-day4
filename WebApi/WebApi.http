@@ -30,3 +30,9 @@ Accept: application/json
 
 GET {{WebApi_HostAddress}}/weatherforecast/MyDepartCoursesSQL?query=Git
 Accept: application/json
+
+
+###
+
+GET {{WebApi_HostAddress}}/weatherforecast/CourseInstructors
+Accept: application/json

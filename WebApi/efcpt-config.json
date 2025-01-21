@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
   "code-generation": {
     "enable-on-configuring": false,
-    "generate-mermaid-diagram": false,
+    "generate-mermaid-diagram": true,
     "merge-dacpacs": false,
     "refresh-object-lists": false,
     "remove-defaultsql-from-bool-properties": false,
