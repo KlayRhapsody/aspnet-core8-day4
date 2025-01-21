@@ -1,0 +1,6 @@
+@WebApiWithEFG_HostAddress = http://localhost:5173
+
+GET {{WebApiWithEFG_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
