@@ -298,3 +298,83 @@ public async Task<ActionResult<InstructorsResponse>> GetCourseInstructors()
 }
 ```
 
+
+### **使用 EntityFrameworkCore.Generator 進行程式碼生成**
+
+這是一套會用到 AutoMapper、FluentValidation 等套件的程式碼生成工具。
+- `AutoMapper`：用於對象映射。
+- `FluentValidation`：用於模型驗證。
+
+```bash
+# 安裝 EntityFrameworkCore.Generator 工具
+dotnet tool install --global EntityFrameworkCore.Generator
+
+# 新增一個 Web API 專案
+dotnet new webapi -n WebApiWithEFG
+
+# 先自建 scret id 也可以
+dotnet user-secrets init --id 50e6f746-1a06-4c3d-85e6-adc5aaf8d41f
+
+# 產生對應的 generation.yml 檔案
+# 需注意 generation.yml 檔案中的 directory 路徑格式
+# 會將連線字串新增至 user-secrets 中
+efg initialize -c
+"Server=(localdb)\MSSQLLocalDB;Database=ContosoUniversity;Trusted_Connection=True"
+-p SqlServer --id 50e6f746-1a06-4c3d-85e6-adc5aaf8d41f
+
+# 列出當前的 user-secrets
+dotnet user-secrets list
+
+# 安裝相關套件
+dotnet add package FluentValidation
+dotnet add package AutoMapper
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+
+# 生成程式碼
+efg generate
+```
+
+註冊服務
+
+```csharp
+builder.Services.AddDbContext<ContosoUniversityEFGContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Generator"));
+});
+
+// 註冊 AutoMapper 服務並掃描所有的 Profile 類別
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
+```
+
+AutoMapper 使用方式，將 `Course` 實體類別映射到 `CourseReadModel` DTO 類別。
+
+`ProjectTo` 會在 SQL 查詢中使用 SELECT 語句，只查詢 CourseReadModel 類別中的屬性，這樣可以確保只從資料庫中提取所需的資料，從而提高查詢效能。
+
+AutoMapper 產生的 #region Generated xxx 區塊中的屬性，是根據映射規則自動生成的，不要手動修改這些屬性。
+
+```csharp
+
+public WeatherForecastController(ContosoUniversityEFGContext context,
+        IMapper mapper)
+{
+    _context = context;
+    _mapper = mapper;
+}
+
+var data = _context.Courses.ProjectTo<CourseReadModel>(_mapper.ConfigurationProvider);
+```
+
+
+### **使用 EFG 生成的目錄與程式碼**
+
+* Data 資料夾
+Data 資料夾主要負責資料存取層（Data Access Layer, DAL），包含與資料庫互動的程式碼。這裡的程式碼通常包括以下幾個部分：
+    - `Entities`: 定義資料庫中的實體（Entity），這些實體對應於資料庫中的表格。
+    - `Mapping`: 使用 Entity Framework Core 的 Fluent API 來配置實體與資料庫表格之間的映射關係。這些映射類別實現了 IEntityTypeConfiguration<T> 介面，並在 Configure 方法中定義表格名稱、主鍵、欄位屬性及關聯。
+    - `Queries`: 包含擴充方法（Extension Methods），用於簡化和重用查詢邏輯。
+    - `Context`: 定義資料庫上下文類別，繼承自 DbContext，並包含 DbSet<T> 屬性來表示資料庫中的表格。
+* Domain 資料夾
+Domain 資料夾主要負責業務邏輯層（Business Logic Layer, BLL），包含與業務邏輯相關的程式碼。這裡的程式碼通常包括以下幾個部分：
+    - `Models`: 定義資料傳輸物件（DTO），這些物件用於在不同層之間傳遞資料。
+    - `Mapping`: 使用 AutoMapper 來配置實體與 DTO 之間的映射關係。這些映射類別繼承自 AutoMapper.Profile，並在建構函式中定義映射規則。
+    - `Validation`: 使用 FluentValidation 來定義 DTO 的驗證規則。這些驗證類別繼承自 AbstractValidator<T>，並在建構函式中定義驗證規則。
