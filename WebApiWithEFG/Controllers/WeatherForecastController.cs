@@ -1,4 +1,9 @@
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebApiWithEFG.Data;
+using WebApiWithEFG.Domain.Models;
 
 namespace WebApiWithEFG.Controllers;
 
@@ -12,21 +17,31 @@ public class WeatherForecastController : ControllerBase
     };
 
     private readonly ILogger<WeatherForecastController> _logger;
+    private readonly ContosoUniversityEFGContext _context;
+    private readonly IMapper _mapper;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, 
+        ContosoUniversityEFGContext context,
+        IMapper mapper)
     {
         _logger = logger;
+        _context = context;
+        _mapper = mapper;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    public IEnumerable<CourseReadModel> Get()
     {
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-        })
-        .ToArray();
+        // var data = _context.Courses.Select(c => new CourseReadModel
+        // {
+        //     CourseID = c.CourseID,
+        //     Title = c.Title,
+        //     Credits = c.Credits,
+        //     DepartmentID = c.DepartmentID
+        // });
+
+        var data = _context.Courses.ProjectTo<CourseReadModel>(_mapper.ConfigurationProvider);
+
+        return data;
     }
 }
