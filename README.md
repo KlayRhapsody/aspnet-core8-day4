@@ -404,10 +404,3 @@ dotnet ef migrations script <FROM> <TO> -o output.sql
 # dotnet ef database drop
 ```
 
- Migrations
-- dotnet ef migrations add init
-•
-- dotnet ef migrations remove
-•
-- dotnet ef migrations script <FROM> <TO> -o output.sql
-• <FROM> 0 ( )
