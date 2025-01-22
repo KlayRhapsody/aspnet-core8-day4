@@ -378,3 +378,36 @@ Domain 資料夾主要負責業務邏輯層（Business Logic Layer, BLL），包
     - `Models`: 定義資料傳輸物件（DTO），這些物件用於在不同層之間傳遞資料。
     - `Mapping`: 使用 AutoMapper 來配置實體與 DTO 之間的映射關係。這些映射類別繼承自 AutoMapper.Profile，並在建構函式中定義映射規則。
     - `Validation`: 使用 FluentValidation 來定義 DTO 的驗證規則。這些驗證類別繼承自 AbstractValidator<T>，並在建構函式中定義驗證規則。
+
+
+### **透過既有的程式碼產生對應的 Migration**
+
+可以調整既有的連線設定，使更新資料庫時產生新的資料庫並包含完整的 DB Schema 
+
+```bash
+# 產生 Migration
+dotnet ef migrations add {Migration Name}
+
+# 更新資料庫
+dotnet ef database update -v    # 套用變更到目前最新版本
+dotnet ef database update 0     # 回覆所有資料庫移轉變更
+dotnet ef database update <TO>  # 套用變更到指定版本
+
+# 移除 Migration 預設會移除最後一個 Migration
+# dotnet ef migrations remove
+
+# 產生 SQL 腳本
+# from 0 代表從第一個 Migration 開始
+dotnet ef migrations script <FROM> <TO> -o output.sql
+
+# 刪除資料庫
+# dotnet ef database drop
+```
+
+ Migrations
+- dotnet ef migrations add init
+•
+- dotnet ef migrations remove
+•
+- dotnet ef migrations script <FROM> <TO> -o output.sql
+• <FROM> 0 ( )
