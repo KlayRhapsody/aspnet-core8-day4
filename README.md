@@ -404,3 +404,119 @@ dotnet ef migrations script <FROM> <TO> -o output.sql
 # dotnet ef database drop
 ```
 
+
+### **透過 `aspnet-codegenerator` 產生 Controller**
+
+安裝相關套件
+
+```bash
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package Microsoft.VisualStudio.Web.CodeGeneration.Design
+dotnet add package Microsoft.EntityFrameworkCore.Design
+```
+
+產生 Controller
+
+```bash
+# -name: Controller 名稱
+# -async: 使用非同步操作
+# -m: 指定 Model 類別
+# -dc: 指定 DbContext 類別
+# -outDir: 輸出目錄
+# -f: 強制覆蓋現有檔案
+# -api: 產生 Web API Controller
+dotnet aspnet-codegenerator controller -name CoursesController -async -m Course -dc ContosoUniversityContext -outDir Controllers -f -api
+```
+
+
+### **使用 DTO 類別替代實體模型**
+
+在請求參數與回應時直接使用實體模型，可能會導致循環參考問題，或是回傳過多的資料，或是開放太多資料更新。
+
+透過 DTO 類別，可以將實體模型中的部分屬性映射到 DTO 類別中，從而避免這些問題。
+
+PUT 範例
+
+```csharp
+public async Task<IActionResult> PutCourse(int id, CourseUpdate course)
+{
+    var courseToUpdate = await _context.Courses.FindAsync(id);
+    if (courseToUpdate == null)
+    {
+        return NotFound();
+    }
+
+    courseToUpdate.Credits = course.Credits;
+    courseToUpdate.Title = course.Title;
+
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
+```
+
+POST 範例
+
+```csharp
+public async Task<ActionResult<Course>> PostCourse(CourseCreate courseToCreate)
+{
+    var course = new Course
+    {
+        Credits = courseToCreate.Credits,
+        Title = courseToCreate.Title
+    };
+
+    _context.Courses.Add(course);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction("GetCourse", new { id = course.CourseId }, course);
+}
+```
+
+
+### **使用 ORM 操作時不好的寫法**
+
+```csharp
+// 透過 Attach 方法將物件附加到 DbContext 中，並將狀態設定為 Modified
+_context.Attach(course);
+_context.Entry(course).State = EntityState.Modified;
+
+// 透過 Update 一次更新全部屬性
+_context.Update(course);
+
+// 透過 Entry 方法附加物件並取得物件的狀態
+_context.Entry(course).State = EntityState.Modified;
+```
+
+
+### **分頁作法**
+
+1. 先做排序
+2. 計算總筆數
+3. 計算總頁數
+4. 查詢分頁
+
+```csharp
+public async Task<ActionResult<IEnumerable<Course>>> GetCourses(int pageIndex = 1, int pageSize = 10)
+{
+    // 排序
+    var courses = _context.Courses.OrderBy(c => c.CourseId).AsQueryable();
+
+    // 計算總筆數
+    var totalRecords = await courses.CountAsync();
+
+    // 計算總頁數
+    var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+
+    // 查詢分頁
+    var pagedCourses = await courses
+        .Skip((pageIndex - 1) * pageSize)
+        .Take(pageSize).ToListAsync();
+    
+    return Ok(new
+    {
+        TotalPages = totalPages,
+        TotalRecords = totalRecords,
+        Data = pagedCourses
+    });
+}

@@ -19,20 +19,61 @@ Accept: application/json
 GET {{WebApi_HostAddress}}/weatherforecast/MyDepartCourses?query=Git
 Accept: application/json
 
-
 ###
 
 GET {{WebApi_HostAddress}}/weatherforecast/MyDepartCoursesSP?query=Git
 Accept: application/json
-
 
 ###
 
 GET {{WebApi_HostAddress}}/weatherforecast/MyDepartCoursesSQL?query=Git
 Accept: application/json
 
-
 ###
 
 GET {{WebApi_HostAddress}}/weatherforecast/CourseInstructors
+Accept: application/json
+
+###
+
+GET {{WebApi_HostAddress}}/courses/
+Accept: application/json
+
+###
+
+GET {{WebApi_HostAddress}}/courses?pageIndex=1&pageSize=5
+Accept: application/json
+
+###
+
+GET {{WebApi_HostAddress}}/courses/1
+Accept: application/json
+
+###
+
+PUT {{WebApi_HostAddress}}/courses/1
+Accept: application/json
+Content-Type: application/json
+
+{
+    "CourseId": 1,
+    "title": "Entity Framework Core 6 開發實戰",
+    "credits": 4
+}
+
+###
+
+POST {{WebApi_HostAddress}}/courses
+Accept: application/json
+Content-Type: application/json
+
+{
+    "courseId": 1,
+    "title": "Asp Net Core 8 Day 7",
+    "credits": 4
+}
+
+###
+
+DELETE  {{WebApi_HostAddress}}/courses/15
 Accept: application/json
