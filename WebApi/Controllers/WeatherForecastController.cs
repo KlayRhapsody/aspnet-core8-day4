@@ -128,5 +128,61 @@ public class WeatherForecastController : ControllerBase
 
         return Ok(data);
     }
+
+    [HttpGet("DepartmentCoursesGroupJoin", Name = "GetDepartmentCoursesGroupJoin")]
+    public IActionResult GetDepartmentCoursesGroupJoin()
+    {
+        var data = from d in _context.Departments
+            join c in _context.Courses
+            on d.DepartmentId equals c.DepartmentId into grouping
+            select new
+            {
+                Department = new 
+                {
+                    d.DepartmentId,
+                    d.Name,
+                    d.Budget,
+                    d.StartDate,
+                    Courses = grouping
+                        .Where(c => c.Credits > 3)
+                        .Select(c => new
+                        {
+                            c.CourseId,
+                            c.Title,
+                            c.Credits
+                        })
+                }
+            };
         
+        return Ok(data);
+    }
+
+    [HttpPost("AttachBehavior", Name = "PostAttachBehavior")]
+    public IActionResult PostAttachBehavior(CourseCreate courseToCreate)
+    {
+        var course = new Course
+        {
+            CourseId = courseToCreate.CourseId > 0 ? courseToCreate.CourseId : 0,
+            Credits = courseToCreate.Credits,
+            Title = courseToCreate.Title,
+            DepartmentId = 1
+        };
+
+        // _context.Courses.Attach(course);
+        // _context.Entry(course).State = EntityState.Modified;
+        // _context.SaveChanges();
+
+        // return NoContent();
+
+        _context.Courses.Attach(course);
+        _context.Entry(course).State = EntityState.Modified;
+
+        _context.SaveChanges();
+        return CreatedAtAction("PostAttachBehavior", new { id = course.CourseId }, new Course
+            {
+                CourseId = course.CourseId,
+                Credits = course.Credits,
+                Title = course.Title
+            });
+    }       
 }

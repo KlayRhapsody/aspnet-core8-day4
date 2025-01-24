@@ -489,6 +489,32 @@ _context.Entry(course).State = EntityState.Modified;
 ```
 
 
+### **Attach、Entry**
+
+如果是具有所產生索引鍵的實體類型，如果實體已設定其主鍵值，則會在狀態中 Unchanged 追蹤
+
+如果未設定主鍵值，則會在 狀態中 Added 追蹤它。 這有助於確保只會插入新的實體
+
+將狀態設定為 `EntityState.Modified`，則會做 `INSERT` 操作
+* 若 `course` 未設定主鍵值，正常更新
+* 若 `course` 設定主鍵值，則更新時可能會收到異常
+
+```csharp
+_context.Courses.Attach(course);
+_context.Entry(course).State = EntityState.Added;
+_context.SaveChanges();
+```
+
+將狀態設定為 `EntityState.Modified`，則會做 `Update` 操作
+* 若 `course` 未設定主鍵值，則更新時可能會收到異常
+* 若 `course` 設定主鍵值，則正常更新
+
+```csharp
+_context.Courses.Attach(course);
+_context.Entry(course).State = EntityState.Modified;
+_context.SaveChanges();
+```
+
 ### **分頁作法**
 
 1. 先做排序
@@ -520,3 +546,51 @@ public async Task<ActionResult<IEnumerable<Course>>> GetCourses(int pageIndex = 
         Data = pagedCourses
     });
 }
+```
+
+### **Group Join**
+
+沒有在結果中直接返回 `IEnumerable` 的集合。相反，對集合進行了過濾（`Where`）和選擇（`Select`），這些操作可以完全轉譯為 SQL
+
+```csharp
+public IActionResult GetDepartmentCoursesGroupJoin()
+{
+    var data = from d in _context.Departments
+        join c in _context.Courses
+        on d.DepartmentId equals c.DepartmentId into grouping
+        select new
+        {
+            Department = new 
+            {
+                d.DepartmentId,
+                d.Name,
+                d.Budget,
+                d.StartDate,
+                Courses = grouping
+                    .Where(c => c.Credits > 3)
+                    .Select(c => new
+                    {
+                        c.CourseId,
+                        c.Title,
+                        c.Credits
+                    })
+            }
+        };
+    
+    return Ok(data);
+}
+```
+
+對應轉換成 SQL 語法
+
+```sql
+Executed DbCommand (42ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+SELECT [d].[DepartmentID], [d].[Name], [d].[Budget], [d].[StartDate], [c0].[CourseId], [c0].[Title], [c0].[Credits]
+FROM [Department] AS [d]
+LEFT JOIN (
+    SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [c].[DepartmentID]
+    FROM [Course] AS [c]
+    WHERE [c].[Credits] > 3
+) AS [c0] ON [d].[DepartmentID] = [c0].[DepartmentID]
+ORDER BY [d].[DepartmentID]
+```

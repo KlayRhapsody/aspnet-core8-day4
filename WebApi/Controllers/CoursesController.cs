@@ -108,13 +108,19 @@ public class CoursesController : ControllerBase
         var course = new Course
         {
             Credits = courseToCreate.Credits,
-            Title = courseToCreate.Title
+            Title = courseToCreate.Title,
         };
 
         _context.Courses.Add(course);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction("GetCourse", new { id = course.CourseId }, course);
+        return CreatedAtAction("GetCourse", new { id = course.CourseId }, new Course
+        {
+            CourseId = course.CourseId,
+            Credits = course.Credits,
+            Title = course.Title,
+            DepartmentId = course.DepartmentId
+        });
     }
 
     // DELETE: api/Courses/5
