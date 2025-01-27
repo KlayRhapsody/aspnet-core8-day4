@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WebApi.Controllers;
 
-[Route("[controller]")]
+[Route("api/[controller]")]
 [ApiController]
 public class CoursesController : ControllerBase
 {
@@ -51,6 +51,30 @@ public class CoursesController : ControllerBase
         }
 
         return course;
+    }
+
+    // GET: api/Courses/5/Depart
+    [HttpGet("{id}/Depart", Name = "GetCourseWithDepartment")]
+    public async Task<ActionResult<Course>> GetCourseWithDepartment(int id)
+    {
+        var course = await _context.Courses.FindAsync(id);
+
+        if (course == null)
+        {
+            return NotFound();
+        }
+
+        _context.Entry(course)
+            .Reference(c => c.Department)
+            .Load();
+
+        return Ok(new
+        {
+            course.CourseId,
+            course.Title,
+            course.Credits,
+            DepartmentName = course.Department.Name
+        });
     }
 
     // PUT: api/Courses/5

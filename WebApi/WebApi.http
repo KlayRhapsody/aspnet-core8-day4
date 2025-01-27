@@ -54,22 +54,22 @@ Content-Type: application/json
 
 ###
 
-GET {{WebApi_HostAddress}}/courses/
+GET {{WebApi_HostAddress}}/api/courses/
 Accept: application/json
 
 ###
 
-GET {{WebApi_HostAddress}}/courses?pageIndex=1&pageSize=5
+GET {{WebApi_HostAddress}}/api/courses?pageIndex=1&pageSize=5
 Accept: application/json
 
 ###
 
-GET {{WebApi_HostAddress}}/courses/1
+GET {{WebApi_HostAddress}}/api/courses/1
 Accept: application/json
 
 ###
 
-PUT {{WebApi_HostAddress}}/courses/1
+PUT {{WebApi_HostAddress}}/api/courses/1
 Accept: application/json
 Content-Type: application/json
 
@@ -81,7 +81,7 @@ Content-Type: application/json
 
 ###
 
-POST {{WebApi_HostAddress}}/courses
+POST {{WebApi_HostAddress}}/api/courses
 Accept: application/json
 Content-Type: application/json
 
@@ -93,5 +93,11 @@ Content-Type: application/json
 
 ###
 
-DELETE  {{WebApi_HostAddress}}/courses/19
+DELETE  {{WebApi_HostAddress}}/api/courses/19
+Accept: application/json
+
+
+###
+
+GET {{WebApi_HostAddress}}/api/Courses/5/Depart
 Accept: application/json

@@ -594,3 +594,106 @@ LEFT JOIN (
 ) AS [c0] ON [d].[DepartmentID] = [c0].[DepartmentID]
 ORDER BY [d].[DepartmentID]
 ```
+
+
+### **Entity Framework Core 載入關聯資料的三種方法**
+
+1. 預先載入 `Eager Loading`：使用 `Include` 方法一次性載入所有關聯資料。
+
+```csharp
+// 透過導覽屬性，直接對 Department 查詢
+var data = await _context.Courses
+    .Include(item => item.Instructors)
+    .SelectMany(c => c.Instructors, (c, i) => new InstructorsResponse
+    {
+        Id = i.Id,
+        FirstName = i.FirstName,
+        LastName = i.LastName,
+        Discriminator = i.Discriminator
+    })
+    .ToListAsync();
+```
+
+循環參考問題 (資料無法序列化成 JSON)
+
+* 可以透過 [JsonIgnore] 解決「循環參考」問題，但不適用於 DB First 的開發情境，因為會調整到 EF Core 產生的程式碼。
+
+```csharp
+public partial class Course
+{
+    public int CourseId { get; set; }
+    public string? Title { get; set; }
+
+    [JsonIgnore] // <-- 加上這行
+    public virtual Department Department { get; set; } = null!;
+}
+```
+
+* 可以透過 DTO 來解決「循環參考」問題，自定義一個 DTO 類別，只包含需要的屬性。
+
+效能問題 (資料量過大)
+
+* 預先載入一個集合導覽屬性當資料量很大時容易對記憶體使用或是效能造成影響，此時可透過分割查詢(Split queries) 來優化查詢效率，避免因為 JOIN 的關係從資料庫回傳大量的結果集
+
+```csharp
+using (var context = new BloggingContext())
+{
+    var blogs = await context.Blogs
+        .Include(blog => blog.Posts)
+        .AsSplitQuery()  // <-- 加上這行
+        .ToListAsync();
+}
+```
+
+2. 明確載入 `Explicit Loading`：使用 `Load` 方法延遲載入關聯資料。
+
+當你想精準的控制「關聯資料」的載入時機，就可以透過明確載入的 API 來自行載入導覽屬性的關聯資料
+
+```csharp
+public async Task<ActionResult<Course>> GetCourseWithDepartment(int id)
+{
+    var course = await _context.Courses.FindAsync(id);
+
+    _context.Entry(course)
+        .Reference(c => c.Department)
+        .Load();
+
+    return Ok(new
+    {
+        course.CourseId,
+        course.Title,
+        course.Credits,
+        DepartmentName = course.Department.Name
+    });
+}
+```
+
+3. 延遲載入 `Lazy Loading`：使用 `virtual` 修飾符自動載入關聯資料。
+
+容易引發經典的 N+1 問題， Entity Framework Core 預設不支援延遲載入，需要安裝 `Microsoft.EntityFrameworkCore.Proxies` 套件，並在 `OnConfiguring` 方法中啟用延遲載入。
+
+
+### **使用 `TagWith` 註釋 SQL 查詢**
+
+```csharp
+var data = from item in _context.Courses.TagWith("Get Weather Forecast")
+    join d in _context.Departments on item.DepartmentId equals d.DepartmentId
+    // where d.StartDate.Date == DateTime.Parse("2015-03-21")
+    select new
+    {
+        item.CourseId,
+        item.Title,
+        item.Credits,
+        DepartmentName = d.Name
+    };
+```
+
+```sql
+-- Log
+Executed DbCommand (86ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+-- Get Weather Forecast
+
+SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [DepartmentName]
+FROM [Course] AS [c]
+INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
+```

@@ -34,7 +34,7 @@ public class WeatherForecastController : ControllerBase
         //     })
         //     .ToList();
 
-        var data = from item in _context.Courses
+        var data = from item in _context.Courses.TagWith("Get Weather Forecast")
                 join d in _context.Departments on item.DepartmentId equals d.DepartmentId
                 // where d.StartDate.Date == DateTime.Parse("2015-03-21")
                 select new
@@ -117,6 +117,7 @@ public class WeatherForecastController : ControllerBase
     {
         var data = await _context.Courses
             .Include(item => item.Instructors)
+            // .AsSplitQuery()
             .SelectMany(c => c.Instructors, (c, i) => new InstructorsResponse
             {
                 Id = i.Id,
