@@ -163,6 +163,15 @@ public class CoursesController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("BatchUpdateCredits", Name = "PostBatchUpdateCredits")]
+    public async Task<IActionResult> PostBatchUpdateCredits()
+    {
+        await _context.Courses.ExecuteUpdateAsync(setter => 
+            setter.SetProperty(c => c.Credits, c => c.Credits + 1));
+
+        return NoContent();
+    }
+
     private bool CourseExists(int id)
     {
         return _context.Courses.Any(e => e.CourseId == id);

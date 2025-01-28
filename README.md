@@ -697,3 +697,28 @@ SELECT [c].[CourseID] AS [CourseId], [c].[Title], [c].[Credits], [d].[Name] AS [
 FROM [Course] AS [c]
 INNER JOIN [Department] AS [d] ON [c].[DepartmentID] = [d].[DepartmentID]
 ```
+
+
+### **有效率的批次更新**
+
+使用 `ExecuteUpdate` 方法進行批次更新，可以有效提高更新效率。
+
+```csharp
+[HttpPost("BatchUpdateCredits", Name = "PostBatchUpdateCredits")]
+public async Task<IActionResult> PostBatchUpdateCredits()
+{
+    await _context.Courses.ExecuteUpdateAsync(setter => setter
+        .SetProperty(c => c.Credits, c => c.Credits + 1));
+
+    return NoContent();
+}
+```
+
+對應產生的 SQL 查詢語句
+
+```sql
+Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+UPDATE [c]
+SET [c].[Credits] = [c].[Credits] + 1
+FROM [Course] AS [c]
+```

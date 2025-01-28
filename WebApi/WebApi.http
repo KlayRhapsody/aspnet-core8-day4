@@ -101,3 +101,9 @@ Accept: application/json
 
 GET {{WebApi_HostAddress}}/api/Courses/5/Depart
 Accept: application/json
+
+
+###
+
+POST {{WebApi_HostAddress}}/api/Courses/BatchUpdateCredits
+Accept: application/json
